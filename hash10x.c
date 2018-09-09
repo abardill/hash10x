@@ -120,7 +120,7 @@ int compareHashTemp (const void *a, const void *b)
 
 static inline U32 hashIndexFind (U64 hash, int isAdd)
 {
-  static int nIndex = 0 ;
+  static U32 nIndex = 0 ;
   U32 index ;
   U64 offset = hash & hashTableMask ;
   U64 diff = ((hash >> hashTableBits) & hashTableMask) | 1 ; /* odd number so coprime to size */
@@ -157,7 +157,7 @@ void processBlock (U32 *readData, BarcodeBlock *b)
   b->nHash = n ;
   b->codeHash = new (n, CodeHash) ;
   for (i = 0 ; i < n ; ++i)
-    { int index = hashIndexFind (arrp(a,i,HashTemp)->hash, TRUE) ;
+    { size_t index = hashIndexFind (arrp(a,i,HashTemp)->hash, TRUE) ;
       ++array(hashCount, index, U32) ;
       b->codeHash[i].hash = index ;
       b->codeHash[i].read = arrp(a,i,HashTemp)->read ;
@@ -206,12 +206,12 @@ void readFQB (FILE *f, int N, int chunkSize)
     }
   fclose (f) ;
 
-  fprintf (outFile, "  read %d read pair records for %d barcodes, mean %.2f read pairs per barcode\n",
+  fprintf (outFile, "  read %d read pair records for %ld barcodes, mean %.2f read pairs per barcode\n",
 	  nReads, arrayMax(barcodeBlocks)-1, nReads/(double)(arrayMax(barcodeBlocks)-1)) ;
   fprintf (outFile, "  created %ld hashes, mean %.2f hashes per read pair, %.2f per barcode\n",
 	  (long)nHashes, nHashes/(double)nReads, nHashes/(double)(arrayMax(barcodeBlocks)-1)) ;
   if (outFile != stdin)
-    { printf ("  read %d read pair records for %d barcodes, mean %.2f read pairs per barcode\n",
+    { printf ("  read %d read pair records for %ld barcodes, mean %.2f read pairs per barcode\n",
 	  nReads, arrayMax(barcodeBlocks)-1, nReads/(double)(arrayMax(barcodeBlocks)-1)) ;
       printf ("  created %ld hashes, mean %.2f hashes per read pair, %.2f per barcode\n",
 	  (long)nHashes, nHashes/(double)nReads, nHashes/(double)(arrayMax(barcodeBlocks)-1)) ;
@@ -240,10 +240,10 @@ void writeHashFile (FILE *f)
     }
   fclose (f) ;
 
-  fprintf (outFile, "  wrote %d hash table entries and %d barcode blocks\n",
+  fprintf (outFile, "  wrote %d hash table entries and %ld barcode blocks\n",
 	   hashTableSize, arrayMax(barcodeBlocks)) ;
   if (outFile != stdout)
-    printf ("  wrote %d hash table entries and %d barcode blocks\n",
+    printf ("  wrote %d hash table entries and %ld barcode blocks\n",
 	    hashTableSize, arrayMax(barcodeBlocks)) ;
 }
 
@@ -277,18 +277,18 @@ void readHashFile (FILE *f)
     }
   fclose (f) ;
 
-  fprintf (outFile, "  read %ld hashes for %ld reads in %d barcode blocks\n",
+  fprintf (outFile, "  read %ld hashes for %ld reads in %ld barcode blocks\n",
 	  (long)nHashes, (long)nReads, arrayMax(barcodeBlocks)) ;
   if (outFile != stdout)
-    printf ("  read %ld hashes for %ld reads in %d barcode blocks\n",
+    printf ("  read %ld hashes for %ld reads in %ld barcode blocks\n",
 	    (long)nHashes, (long)nReads, arrayMax(barcodeBlocks)) ;
 }
 
 void fillHashTable (void)
 {
-  int i, j ;
-  long nHashes = 0 ;
-  int nHashCount = arrayMax(hashCount) ;
+  U32 i, j ;
+  U32 nHashes = 0 ;
+  U32 nHashCount = arrayMax(hashCount) ;
 
   hashCodes = arrayCreate(nHashCount,U32*) ;
   arrayMax(hashCodes) = nHashCount ;
@@ -307,7 +307,7 @@ void fillHashTable (void)
       for (j = 0 ; j < b->nHash ; ++j, ++c)
 	arr(hashCodes,c->hash,U32*)[hashN[c->hash]++] = i ;
     }
-  fprintf (outFile, "  filled hash table: %ld hashes from %d barcodes in %d bins\n",
+  fprintf (outFile, "  filled hash table: %d hashes from %ld barcodes in %d bins\n",
 	  nHashes, arrayMax(barcodeBlocks), nHashCount) ;
 #ifdef CHECK
   for (i = 0 ; i < nHashCount ; ++i)
@@ -397,7 +397,7 @@ int cribChrMax = 0 ;
 static void cribAddGenome (FILE *f, CribInfo *crib)
 {
   char *seq ;
-  int len, chr = 0, pos ;
+  int len, chr = 0;
   int nAbsent = 0, nPresent = 0 ;
   U32 index ;
   dna2indexConv['N'] = dna2indexConv['n'] = 0 ; /* to get 2-bit encoding */
@@ -561,7 +561,7 @@ void exploreHash (int x)
   if (!hashWithinRange)
     { fprintf (stderr, "exploreHash called without hashCountRange\n") ; return ; }
   Array shared = hashNeighbours (x) ; if (!shared) return ;
-  fprintf (outFile, "  %d hashes sharing codes with %s\n", arrayMax(shared), cribText(x)) ;
+  fprintf (outFile, "  %ld hashes sharing codes with %s\n", arrayMax(shared), cribText(x)) ;
   arraySort (shared, compareCodeRead) ;
   int i, count = 1, n = 0 ;
   CodeHash *d = arrp(shared, 0, CodeHash) ;
@@ -965,10 +965,10 @@ void clusterSplitCodes (void)
     else
       *new1++ = *old ; // also carries over existing codeHash
   
-  fprintf (outFile, "  made %d additional new barcodes from clusters in %d original barcodes\n",
+  fprintf (outFile, "  made %d additional new barcodes from clusters in %ld original barcodes\n",
 	   nClusters, arrayMax(barcodeBlocks)) ;
   if (outFile != stdout)
-    printf ("  made %d additional new barcodes from clusters in %d original barcodes\n",
+    printf ("  made %d additional new barcodes from clusters in %ld original barcodes\n",
 	    nClusters, arrayMax(barcodeBlocks)) ;
   arrayDestroy (barcodeBlocks) ;
   barcodeBlocks = newBlocks ;
@@ -1028,7 +1028,7 @@ void initialise (int k, int w, int r, int B)
   hashTableBits = B ;
   if (hashTableBits < 20 || hashTableBits > 30)
     die ("hashTableBits %d out of range 20-30", hashTableBits) ;
-  hashTableSize = (size_t)1 << hashTableBits ;
+  hashTableSize = (U32)1 << hashTableBits ;
   hashTableMask = hashTableSize - 1 ;
   hashIndex = new0 (hashTableSize, U32) ;
   hashValue = arrayCreate (1 << 20, U64) ; array(hashValue,0,U64) = 0 ; // so true indexes != 0
@@ -1225,7 +1225,7 @@ int main (int argc, char *argv[])
 void exploreHash2 (int x, int clusterThreshold)
 {
   Array hash1 = hashNeighbours (x) ; if (!hash1) return ;
-  fprintf (outFile, "  %d hashes sharing codes with %s\n", arrayMax(hash1), cribText (x)) ;
+  fprintf (outFile, "  %ld hashes sharing codes with %s\n", arrayMax(hash1), cribText (x)) ;
 
   Array code1Count = arrayCreate (1024, U32) ;
   HASH code1Hash = hashCreate (1024) ;
