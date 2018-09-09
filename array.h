@@ -27,7 +27,6 @@
  * Last edited: Apr 13 02:42 2018 (rd)
  *-------------------------------------------------------------------
  */
-
 #ifndef ARRAY_DEFINED
 #define ARRAY_DEFINED
 
@@ -39,13 +38,13 @@
 /* #define ARRAY_CHECK */
 
 typedef struct ArrayStruct
-  { int   magic ;
+  { long   magic ;
     char* base ;    /* char* since need to do pointer arithmetic in bytes */
-    int   dim ;     /* length of alloc'ed space in number of elements */
-    int   size ;    /* size of elements in bytes */
-    int   max ;     /* 1+largest element accessed via array() = number of active elements */
+    long   dim ;     /* length of alloc'ed space in number of elements */
+    long   size ;    /* size of elements in bytes */
+    long   max ;     /* 1+largest element accessed via array() = number of active elements */
 #ifdef ARRAY_REPORT
-    int   id ;      /* unique identifier */
+    long   id ;      /* unique identifier */
 #endif
   } *Array ;
  
@@ -55,26 +54,26 @@ typedef struct ArrayStruct
 
 #define ARRAY_MAGIC 8918274
 
-Array   uArrayCreate (int n, int size) ;
+Array   uArrayCreate (long n, long size) ;
 #define arrayCreate(n,type)	         uArrayCreate(n,sizeof(type))
-Array   uArrayReCreate (Array a, int n, int size) ;
+Array   uArrayReCreate (Array a, long n, long size) ;
 #define arrayReCreate(a,n,type)	         uArrayReCreate(a,n,sizeof(type))
 void    arrayDestroy (Array a) ;
 Array	arrayCopy (Array a) ;
-void    arrayExtend (Array a, int n) ;
+void    arrayExtend (Array a, long n) ;
 
      /* array() and arrayp() will extend the array if necessary */
 
-char    *uArray (Array a, int index) ;
+char    *uArray (Array a, long index) ;
 #define array(ar,i,type)	(*(type*)uArray(ar,i))
 #define arrayp(ar,i,type)	((type*)uArray(ar,i))
-char    *uArrayBlock (Array a, int i, int n) ;
+char    *uArrayBlock (Array a, long i, long n) ;
 #define arrayBlock(ar,i,n,type) ((type*)uArrayBlock(ar,i,n)) /* use when memset(), fread() etc multiple items */
 
      /* only use arr() when there is no danger of needing expansion */
 
 #if (defined(ARRAY_CHECK) && !defined(ARRAY_NO_CHECK))
-char    *uArrCheck (Array a, int index) ;
+char    *uArrCheck (Array a, long index) ;
 #define arr(ar,i,type)	(*(type*)uArrCheck(ar,i))
 #define arrp(ar,i,type)	((type*)uArrCheck(ar,i))
 #else
@@ -88,19 +87,19 @@ Array   arrayRead (FILE *f) ;	/* returns 0 if fails */
 #define arrayMax(ar)  ((ar)->max)
 
 	/* JTM's package to hold sorted arrays of ANY TYPE */
-typedef int ArrayOrder(const void*, const void*) ;             /* call back function prototype for sorting arrays */
+typedef long ArrayOrder(const void*, const void*) ;             /* call back function prototype for sorting arrays */
 #define arraySort(a,order)  qsort((a)->base, (a)->max, (a)->size, order)
 BOOL    arrayInsert(Array a, void * s, ArrayOrder *order);
 BOOL    arrayRemove(Array a, void * s, ArrayOrder *order);
 void    arrayCompress(Array a) ;
-BOOL    arrayFind(Array a, void *s, int *ip, ArrayOrder *order);
+BOOL    arrayFind(Array a, void *s, long *ip, ArrayOrder *order);
 
 #ifdef ARRAY_REPORT
 	/* status and memory monitoring */
 #define ARRAY_REPORT_MAX 0	/* set to maximum number of arrays to keep track of */
-void    arrayStatus (int *nmadep,int* nusedp, int *memAllocp, int *memUsedp) ; /* memUsed only up to REPORT_MAX */
-int     arrayReportMark (void) ; /* returns current array number */
-void    arrayReport (int j) ;	/* write stderr about all arrays since j */
+void    arrayStatus (long *nmadep,int* nusedp, long *memAllocp, long *memUsedp) ; /* memUsed only up to REPORT_MAX */
+long     arrayReportMark (void) ; /* returns current array number */
+void    arrayReport (long j) ;	/* write stderr about all arrays since j */
 #endif
 
 #endif
