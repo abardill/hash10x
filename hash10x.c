@@ -16,6 +16,10 @@
 #include "minhash.h"
 #include "array.h"
 #include <ctype.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <errno.h>
+#include <unistd.h>
 #ifdef OMP
 #include <omp.h>
 #endif
@@ -84,6 +88,22 @@ BOOL isInteractive = FALSE ;
 int numThreads = 1 ;		/* default to serial - reset  */
 
 FILE *outFile ;			/* initialise to stdout at start of main() */
+
+void handler(int sig)
+{
+	void* array[10];
+	int size;
+
+	size = backtrace(array, 10);
+	fprintf(stderr, "Error: signal %d:\n", sig);
+	fprintf(stderr, "arrayMax(hashValue) = %ld\n", arrayMax(hashValue));
+	fprintf(stderr, "hashValue->dim = %ld\n", hashValue->dim);
+	fprintf(stderr, "arrayMax(hashCount) = %ld\n", arrayMax(hashCount));
+	fprintf(stderr, "hashCount->dim = %ld\n", hashCount->dim);
+
+	backtrace_symbols_fd(array, size, STDERR_FILENO);
+	exit(1);
+}
 
 /********************************************/
 
@@ -642,7 +662,7 @@ void errorFix (int hashMin, int hashMax)
 	  if (score < min[type]) min[type] = score ;
 	  if (score > max[type]) max[type] = score ;
 	  if ((type == CRIB_ERR && score > 0.00005) || (type != CRIB_ERR && score < 0.00005))
-	    { printf ("  %s count %d max %d score %.6f ",
+	    { printf ("  %s count %d max %ld score %.6f ",
 		      cribText(x), xCount, arrayMax(a)-1, score) ;
 	      for (i = 5 ; i < arrayMax(a) ; ++i) printf (" %d", arr(a,i,int)) ;
 	      putchar ('\n') ;
@@ -1040,6 +1060,7 @@ void initialise (int k, int w, int r, int B)
 
 int main (int argc, char *argv[])
 {
+  signal(SIGSEGV, handler);
   --argc ; ++argv ;		/* eat program name */
 
   outFile = stdout ;
