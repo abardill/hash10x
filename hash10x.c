@@ -149,7 +149,7 @@ static inline U32 hashIndexFind (U64 hash, int isAdd)
   if (!index && isAdd)
     { index = hashIndex[offset] = arrayMax(hashValue) ;
       array(hashValue, index, U64) = hash ;
-      if ((++nIndex >> 2) > hashTableSize) die ("hashTableSize is too small") ;
+      if ((++nIndex << 2) > hashTableSize) die ("hashTableSize is too small") ;
     }
   return index ;
 }
